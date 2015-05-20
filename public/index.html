@@ -3,15 +3,12 @@
   <head>
     <title>KoLog</title>
   </head>
-  <body>
-    Logs: 
-    <ul id="logs"></ul>
+  <body>    
+    <ul id="logs"  style="list-style-type:none"></ul>
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-    <script>
-      var q = 'id=%ID%';
-      console.log(q);
-      var socket = io.connect('', {query: q});
+    <script>      
+      var socket = io.connect('', {query: 'id=%ID%'});
 
       socket.on('traceLog', function(msg){
         console.log("trace: " + msg);

@@ -3,6 +3,7 @@
 
 // call the packages we need
 var fs         = require('fs');
+var _          = require('underscore');
 var express    = require('express');        // call express
 var app        = express();                 // define our app using express
 var http       = require('http').Server(app)
@@ -85,9 +86,8 @@ app.get('/logs/:id', function (req, res){
 
 app.post('/logs/:id', function (req, res){       
     
-    var id = req.params.id;        
-        
-    var log = "";
+    var id = req.params.id;    
+    var log = '';
 	req.setEncoding('utf8');
 	
 	req.on('data', function(chunk){
@@ -95,13 +95,19 @@ app.post('/logs/:id', function (req, res){
 	});
 	
 	req.on('end', function(){
-        
-        //io.emit('traceLog', log);
-        io.to(id).emit('traceLog', log);
+                   
+        log = addDateTimePrefix(log);
+        console.log(id + ': ' + log);
+                             
+        io.to(id).emit('traceLog', log);                       
         
         logs[id] = logs[id] || [];
 		logs[id].push(log);		
         res.end('OK\n');
 	});           
 });
+
+function addDateTimePrefix(log){
+    return new Date().toUTCString() + ' | ' + log; 
+}
 
