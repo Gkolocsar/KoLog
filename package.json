@@ -1,0 +1,11 @@
+{
+  "name": "kolog",
+  "version": "0.0.1",
+  "description": "Log server",
+  "dependencies": {
+    "express": "*",
+    "socket.io": "*",
+	  "underscore": "*",
+	  "mongoose": "*"
+  }
+}
