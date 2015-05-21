@@ -6,8 +6,17 @@ var fs         = require('fs');
 var _          = require('underscore');
 var express    = require('express');        // call express
 var app        = express();                 // define our app using express
-var http       = require('http').Server(app)
+var http       = require('http').Server(app);
 var io         = require('socket.io')(http);
+
+var bodyParser = require('body-parser');
+
+// configure app to use bodyParser()
+// this will let us get the data from a POST
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+var TraceLine  = require('./app/models/traceLine.js');
 
 // Server vars
 
@@ -18,7 +27,8 @@ var logs = {};
 
 var port = process.env.PORT || 3000;        // set our port
 
-http.listen(port, function(){
+http.listen(port, function(){    
+    
     console.log('Listening to port: ' + port);
 });
 
@@ -74,7 +84,9 @@ app.get('/logs/:id', function (req, res){
     } else {
         
         var body = userLogs.map(function(log, i){
-        	return log;
+        	return log.serverDateTime 
+            + ' | ' + log.traceLevel 
+            + ' | ' + log.message;
         }).join('\n');
         
     }
@@ -84,30 +96,54 @@ app.get('/logs/:id', function (req, res){
 	res.end(body);
 });
 
+//app.post('/logs/:id', function (req, res){       
+//    
+//    var id = req.params.id;
+//        
+//    var message = '';
+//	req.setEncoding('utf8');
+//	
+//	req.on('data', function(chunk){
+//		message += chunk;
+//	});
+//	
+//	req.on('end', function(){
+//        
+//        console.log(id + ': ' + message);                   
+//        var serverDateTime = getDateTime();
+//        var myTrace = new TraceLine(serverDateTime, 1, message);
+//        
+//        io.to(id).emit('traceLog', message);                       
+//        
+//        logs[id] = logs[id] || [];
+//		logs[id].push(myTrace);		
+//        res.end('OK\n');
+//	});           
+//});
+
 app.post('/logs/:id', function (req, res){       
     
-    var id = req.params.id;    
-    var log = '';
-	req.setEncoding('utf8');
-	
-	req.on('data', function(chunk){
-		log += chunk;
-	});
-	
-	req.on('end', function(){
-                   
-        log = addDateTimePrefix(log);
-        console.log(id + ': ' + log);
-                             
-        io.to(id).emit('traceLog', log);                       
+    var id = req.params.id;
+    
+    req.setEncoding('utf8');
+    
+    var message = req.body.message; 
+    console.log('message: ' + message);    
+    var traceLevel = req.body.traceLevel; 
+    console.log('traceLevel: ' + traceLevel.toUpperCase());
+    var serverDateTime = getDateTime(); 
+    console.log('serverDateTime: ' + serverDateTime);
+    var myTrace = new TraceLine(serverDateTime, traceLevel, message);
+                         
+    io.to(id).emit('traceLine', myTrace);                       
         
-        logs[id] = logs[id] || [];
-		logs[id].push(log);		
-        res.end('OK\n');
-	});           
+    logs[id] = logs[id] || [];
+	logs[id].push(myTrace);		
+    res.end('OK\n');
+    	           
 });
 
-function addDateTimePrefix(log){
-    return new Date().toUTCString() + ' | ' + log; 
+function getDateTime(){
+    return new Date().toUTCString(); 
 }
 

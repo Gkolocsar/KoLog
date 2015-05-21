@@ -10,9 +10,15 @@
     <script>      
       var socket = io.connect('', {query: 'id=%ID%'});
 
-      socket.on('traceLog', function(msg){
-        console.log("trace: " + msg);
-        $('#logs').append($('<li>').text(msg));
+      socket.on('traceLine', function(log){
+        
+        var row = log.serverDateTime 
+            + ' | ' + log.traceLevel 
+            + ' | ' + log.message;
+        
+        console.log(row);
+            
+        $('#logs').append($('<li>').text(row));
       });
     </script>
   </body>
