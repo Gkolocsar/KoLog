@@ -57,7 +57,10 @@ app.get('/logs/automatic/:id', function (req, res){
     
     var id = req.params.id;
     
-    //res.sendFile(__dirname + '/public/index.html');
+    if(!id){
+        errorResponse(res);
+        return;
+    }
     
     fs.readFile(__dirname + '/public/index.html', function (err, html) {
         if (err) {
@@ -77,6 +80,12 @@ app.get('/logs/automatic/:id', function (req, res){
 app.get('/logs/:id', function (req, res){
     
     var id = req.params.id;
+    
+    if(!id){
+        errorResponse(res);
+        return;
+    }
+    
     var userLogs = logs[id];
     
     if(!userLogs){
@@ -96,50 +105,31 @@ app.get('/logs/:id', function (req, res){
 	res.end(body);
 });
 
-//app.post('/logs/:id', function (req, res){       
-//    
-//    var id = req.params.id;
-//        
-//    var message = '';
-//	req.setEncoding('utf8');
-//	
-//	req.on('data', function(chunk){
-//		message += chunk;
-//	});
-//	
-//	req.on('end', function(){
-//        
-//        console.log(id + ': ' + message);                   
-//        var serverDateTime = getDateTime();
-//        var myTrace = new TraceLine(serverDateTime, 1, message);
-//        
-//        io.to(id).emit('traceLog', message);                       
-//        
-//        logs[id] = logs[id] || [];
-//		logs[id].push(myTrace);		
-//        res.end('OK\n');
-//	});           
-//});
-
 app.post('/logs/:id', function (req, res){       
     
-    var id = req.params.id;
+    var id = req.params.id;    
     
     req.setEncoding('utf8');
+       
+    var message = req.body.message;   
+    var traceLevel = req.body.traceLevel;
     
-    var message = req.body.message; 
-    console.log('message: ' + message);    
-    var traceLevel = req.body.traceLevel; 
-    console.log('traceLevel: ' + traceLevel.toUpperCase());
-    var serverDateTime = getDateTime(); 
-    console.log('serverDateTime: ' + serverDateTime);
+    if (!message || !traceLevel){
+        errorResponse(res);
+        return;    
+    }
+         
+    var serverDateTime = getDateTime();    
+
     var myTrace = new TraceLine(serverDateTime, traceLevel, message);
+    
+    myTrace.print();
                          
     io.to(id).emit('traceLine', myTrace);                       
         
     logs[id] = logs[id] || [];
 	logs[id].push(myTrace);		
-    res.end('OK\n');
+    res.json({success: true});
     	           
 });
 
@@ -147,3 +137,6 @@ function getDateTime(){
     return new Date().toUTCString(); 
 }
 
+function errorResponse(res){
+    res.json({success: false, message: 'Incomplete data'});        
+}
