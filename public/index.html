@@ -4,21 +4,24 @@
     <title>KoLog</title>
   </head>
   <body>    
-    <ul id="logs"  style="list-style-type:none"></ul>
+    <h2>Trace log:</h2>
+    <ul id="logs"  style="list-style-type:none">
+				
+	</ul>
+	<script id="logTemplate" type="text/x-jQuery-tmpl">        
+		<li><span>${serverDateTime}</span> - <span><b>${traceLevel}</b></span> - <span>${message}<span></li>
+    </script>
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
-    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>	
+	<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.4.4.js"></script>
+    <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
     <script>      
       var socket = io.connect('', {query: 'id=%ID%'});
 
       socket.on('traceLine', function(log){
-        
-        var row = log.serverDateTime 
-            + ' | ' + log.traceLevel 
-            + ' | ' + log.message;
-        
-        console.log(row);
-            
-        $('#logs').append($('<li>').text(row));
+	  
+		$("#logTemplate").tmpl(log).appendTo("#logs");
+                
       });
     </script>
   </body>

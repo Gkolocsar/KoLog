@@ -141,7 +141,14 @@ app.post('/logs/:id', function (req, res){
 });
 
 function getDateTime(){
-    return new Date().toUTCString(); 
+    var date = new Date();
+    return date.getFullYear() 
+    + "/" + date.getMonth()  
+    + "/" + date.getDay()
+    + " " + date.getHours()
+    + ":" + date.getMinutes()
+    + ":" + date.getSeconds()
+    + ":" + date.getMilliseconds();
 }
 
 function errorResponse(res){
