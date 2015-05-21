@@ -47,6 +47,13 @@ io.on('connection', function(socket){
 
 // SERVER API
 // =============================================================================
+
+// Middleware to log requests
+app.use(function(req, res, next) {
+    console.log('Incoming Request: %s %s', req.method, req.url);
+    next();
+});
+
 app.get('/', function (req, res) {
       
   res.end('KoLog is running. The future belongs to the MAD.');
