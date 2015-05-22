@@ -2,8 +2,8 @@
 // =============================================================================
 
 // call the packages we need
-var fs         = require('fs');
-var _          = require('underscore');
+//var fs         = require('fs');
+//var _          = require('underscore');
 var express    = require('express');        // call express
 var app        = express();                 // define our app using express
 var http       = require('http').Server(app);
@@ -15,6 +15,7 @@ var mongoose   = require('mongoose');
 mongoose.connect('mongodb://localhost:27017/traces'); // connect to our database
 
 var TraceLine  = require('./app/models/traceLine.js');
+var Helper     = require('./app/helper.js');
 
 // START THE SERVER
 // =============================================================================
@@ -47,10 +48,8 @@ io.on('connection', function(socket){
                 console.log("Error fetching the trace lines: " + err.stack); 
             }
                         
-            for (var i = 0; i < traces.length; i++) {
-                
-                io.to(id).emit('traceLine', traces[i]);
-                
+            for (var i = 0; i < traces.length; i++) {                
+                io.to(id).emit('traceLine', traces[i]);                
             }                       
         });
     }); 
@@ -84,7 +83,7 @@ app.get('/logs/automatic/:id', function (req, res){
     var id = req.params.id;                 
     
     if(!id){
-        errorResponse(res, 'Incomplete data');
+        Helper.errorResponse(res, 'Incomplete data');
         return;
     }
     
@@ -96,13 +95,13 @@ app.get('/logs/:id', function (req, res){
     var id = req.params.id;
     
     if(!id){
-        errorResponse(res, 'Incomplete data');
+        Helper.errorResponse(res, 'Incomplete data');
         return;
     }                           
 
     TraceLine.find({userId: id}, function(err, traces) {
         if(err){
-            errorResponse(res, err);
+            Helper.errorResponse(res, err);
             return; 
         }
         if(traces.length == 0){
@@ -130,7 +129,7 @@ app.post('/logs/:id', function (req, res){
     var traceLevel = req.body.traceLevel;
     
     if (!message || !traceLevel){
-        errorResponse(res, 'Incomplete data');
+        Helper.errorResponse(res, 'Incomplete data');
         return;    
     }                 
 
@@ -139,7 +138,7 @@ app.post('/logs/:id', function (req, res){
         userId: id, 
         message: message, 
         traceLevel: traceLevel, 
-        serverDateTime: getDateTime() 
+        serverDateTime: Helper.getDateTime() 
     });       
                          
     // Emit the object using socket.io                         
@@ -148,7 +147,7 @@ app.post('/logs/:id', function (req, res){
     // Save the object
     myTrace.save(function(err){       
        if (err){
-          errorResponse(res, err);
+          Helper.errorResponse(res, err);
           return; 
        }               
     });    
@@ -157,19 +156,3 @@ app.post('/logs/:id', function (req, res){
     res.json({success: true});
     	           
 });
-
-function getDateTime(){
-    var date = new Date();
-    return date.getFullYear() 
-    + "/" + date.getMonth()  
-    + "/" + date.getDay()
-    + " " + date.getHours()
-    + ":" + date.getMinutes()
-    + ":" + date.getSeconds()
-    + ":" + date.getMilliseconds();
-}
-
-function errorResponse(res, error){
-    console.log(error);
-    res.json({success: false, message: error});        
-}
