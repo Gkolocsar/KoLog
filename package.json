@@ -7,6 +7,6 @@
     "socket.io": "*",
 	  "underscore": "*",
 	  "mongoose": "*",
-    "body-parser": "*"
+    "body-parser": "*"    
   }
 }

@@ -11,16 +11,10 @@ var io         = require('socket.io')(http);
 
 var bodyParser = require('body-parser');
 
-// configure app to use bodyParser()
-// this will let us get the data from a POST
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+var mongoose   = require('mongoose');
+mongoose.connect('mongodb://localhost:27017/traces'); // connect to our database
 
 var TraceLine  = require('./app/models/traceLine.js');
-
-// Server vars
-
-var logs = {};
 
 // START THE SERVER
 // =============================================================================
@@ -48,6 +42,12 @@ io.on('connection', function(socket){
 // SERVER API
 // =============================================================================
 
+// Middleware to parse the JSON body
+// configure app to use bodyParser()
+// this will let us get the data from a POST
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
 // Middleware to log requests
 app.use(function(req, res, next) {
     console.log('Incoming Request: %s %s', req.method, req.url);
@@ -65,7 +65,7 @@ app.get('/logs/automatic/:id', function (req, res){
     var id = req.params.id;
     
     if(!id){
-        errorResponse(res);
+        errorResponse(res, 'Incomplete data');
         return;
     }
     
@@ -89,27 +89,28 @@ app.get('/logs/:id', function (req, res){
     var id = req.params.id;
     
     if(!id){
-        errorResponse(res);
+        errorResponse(res, 'Incomplete data');
         return;
-    }
-    
-    var userLogs = logs[id];
-    
-    if(!userLogs){
-        body = "There are no logs for this user.";
-    } else {
+    }                           
+
+    TraceLine.find({userId: id}, function(err, traces) {
+        if(err){
+            errorResponse(res, err);
+            return; 
+        }
+        if(traces.length == 0){
+        	res.end("There are no logs for this user."); 
+        }
         
-        var body = userLogs.map(function(log, i){
-        	return log.serverDateTime 
-            + ' | ' + log.traceLevel 
-            + ' | ' + log.message;
+        var body = traces.map(function(trace){
+            return trace.serverDateTime
+            + ' | ' + trace.traceLevel
+            + ' | ' + trace.message; 
         }).join('\n');
         
-    }
-	
-	res.setHeader('Content-Length', Buffer.byteLength(body));
-	res.setHeader('Content-Type', 'text/plain; charset="utf-8"');
-	res.end(body);
+        res.end(body);
+        //res.json(traces);    
+    });	
 });
 
 app.post('/logs/:id', function (req, res){       
@@ -122,20 +123,30 @@ app.post('/logs/:id', function (req, res){
     var traceLevel = req.body.traceLevel;
     
     if (!message || !traceLevel){
-        errorResponse(res);
+        errorResponse(res, 'Incomplete data');
         return;    
-    }
-         
-    var serverDateTime = getDateTime();    
+    }                 
 
-    var myTrace = new TraceLine(serverDateTime, traceLevel, message);
-    
-    myTrace.print();
+    // Create the Object (mongoDB related)
+    var myTrace = new TraceLine({ 
+        userId: id, 
+        message: message, 
+        traceLevel: traceLevel, 
+        serverDateTime: getDateTime() 
+    });       
                          
-    io.to(id).emit('traceLine', myTrace);                       
+    // Emit the object using socket.io                         
+    io.to(id).emit('traceLine', myTrace);
         
-    logs[id] = logs[id] || [];
-	logs[id].push(myTrace);		
+    // Save the object
+    myTrace.save(function(err){       
+       if (err){
+          errorResponse(res, err);
+          return; 
+       }               
+    });    
+    
+    // Return the response		
     res.json({success: true});
     	           
 });
@@ -151,6 +162,7 @@ function getDateTime(){
     + ":" + date.getMilliseconds();
 }
 
-function errorResponse(res){
-    res.json({success: false, message: 'Incomplete data'});        
+function errorResponse(res, error){
+    console.log(error);
+    res.json({success: false, message: error});        
 }
