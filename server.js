@@ -30,13 +30,30 @@ http.listen(port, function(){
 // =============================================================================
 io.on('connection', function(socket){
     
+    var id = socket.handshake.query.id;
+    
     console.log('IO Connection established. User: ' 
-    + socket.handshake.query.id 
+    + id 
     + ' - SocketID : ' 
     + socket.id);
     
     // The user joins it's own ID's room
-    socket.join(socket.handshake.query.id);    
+    socket.join(id);
+    
+    socket.on('wantHistory', function(msg){                
+        
+        TraceLine.find({userId: msg}, function(err, traces) {
+            if(err){
+                console.log("Error fetching the trace lines: " + err.stack); 
+            }
+                        
+            for (var i = 0; i < traces.length; i++) {
+                
+                io.to(id).emit('traceLine', traces[i]);
+                
+            }                       
+        });
+    }); 
 });
 
 // SERVER API
@@ -58,30 +75,20 @@ app.get('/', function (req, res) {
       
   res.end('KoLog is running. The future belongs to the MAD.');
     
-});  
+});
+
+app.use(express.static(__dirname + "/public"));  
 
 app.get('/logs/automatic/:id', function (req, res){
     
-    var id = req.params.id;
+    var id = req.params.id;                 
     
     if(!id){
         errorResponse(res, 'Incomplete data');
         return;
     }
     
-    fs.readFile(__dirname + '/public/index.html', function (err, html) {
-        if (err) {
-            console.log(err);
-            res.writeHead(500);
-			res.end();
-        }
-        
-        html = html.toString().replace('%ID%', id);
-        
-        res.writeHeader(200, {"Content-Type": "text/html"});  
-        res.write(html);  
-        res.end();
-    });    
+    res.sendFile(__dirname + "/public/index.html");   
 });
 
 app.get('/logs/:id', function (req, res){

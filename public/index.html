@@ -13,16 +13,19 @@
     </script>
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>	
-	<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.4.4.js"></script>
+	  <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.4.4.js"></script>
     <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
-    <script>      
-      var socket = io.connect('', {query: 'id=%ID%'});
-
-      socket.on('traceLine', function(log){
-	  
-		    $("#logTemplate").tmpl(log).appendTo("#logs");
-                
-      });
+    <script type="text/javascript" src="/scripts/helper.js"></script>
+    <script type="text/javascript" src="/scripts/socketManager.js"></script>
+    <script>
+      
+      var url = window.location.href;
+      var result = parseUri(url);
+      var id = result.path.split("/")[3];
+      var h = result.queryKey.history;
+      
+      initSocketManagement(id, h);
+                       
     </script>
   </body>
 </html>
