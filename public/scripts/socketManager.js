@@ -1,17 +1,19 @@
-
-function initSocketManagement(id, h){
-	
-	var socket = io.connect('', { query: 'id=' + id });            
+var SocketManager = (function(){          
+       
+  var init = function(uriData){
+    
+    var socket = io.connect('', { query: 'id=' + uriData.id });                
       
-      if (h == '1'){
-        
-        socket.emit('wantHistory', id);
-          
-      }
-
-      socket.on('traceLine', function(log){
-	  
-		    $("#logTemplate").tmpl(log).appendTo("#logs");
-                
-      });
-}
+    if (uriData.requiresHistory == '1'){    
+      socket.emit('wantHistory', uriData.id);      
+    }
+  
+    socket.on('traceLine', function(log){
+      $("#logTemplate").tmpl(log).appendTo("#logs");            
+    });
+  };    
+  
+  return {
+    init: init
+  };  
+})();

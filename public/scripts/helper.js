@@ -1,3 +1,11 @@
+function getUriData(url){
+	var result = parseUri(url);
+	var id = result.path.split("/")[3];
+	var requiresHistory = result.queryKey.history;
+	
+	return {id: id, requiresHistory: requiresHistory};
+}
+
 function parseUri (str) {
 	var	o   = parseUri.options,
 		m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),

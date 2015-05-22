@@ -19,12 +19,9 @@
     <script type="text/javascript" src="/scripts/socketManager.js"></script>
     <script>
       
-      var url = window.location.href;
-      var result = parseUri(url);
-      var id = result.path.split("/")[3];
-      var h = result.queryKey.history;
+      var uriData = getUriData(window.location.href);
       
-      initSocketManagement(id, h);
+      SocketManager.init(uriData);
                        
     </script>
   </body>
