@@ -65,12 +65,6 @@ io.on('connection', function(socket){
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Middleware to log requests
-app.use(function(req, res, next) {
-    console.log('Incoming Request: %s %s', req.method, req.url);
-    next();
-});
-
 app.get('/', function (req, res) {
       
   res.end('-=KoLog is running=- '
@@ -86,7 +80,23 @@ app.use(express.static(__dirname + "/public"));
 // VERBS
 // ============================================================================
 
-app.get('/logs/start', function(req, res){    
+// Middleware to log requests
+app.use(function(req, res, next) {
+    console.log('Incoming Request: %s %s', req.method, req.url);
+    next();
+});
+
+// Middleware to check if the user has a UID
+app.get('/logs/:id', function(req, res, next) {
+    
+    var id = req.params.id;
+    
+    checkUser(id, req, res, function() {
+       next(); 
+    });    
+});
+
+app.get('/logs/start', function(req, res) {    
     // Create the Object (mongoDB related)
     var userId = new UserId({ 
         userId: Helper.randomUID(),          
@@ -104,7 +114,7 @@ app.get('/logs/start', function(req, res){
     res.json(userId); 
 });
 
-app.get('/logs/automatic/:id', function (req, res){
+app.get('/logs/:id', function (req, res) {
     
     var id = req.params.id;                 
     
@@ -112,82 +122,76 @@ app.get('/logs/automatic/:id', function (req, res){
         Helper.errorResponse(res, 'Incomplete data');
         return;
     }
-    
-    checkUser(id, req, res, function(){
-        res.sendFile(__dirname + "/public/index.html");
-    });              
+        
+    res.sendFile(__dirname + "/public/index.html");                  
 });
 
-app.get('/logs/:id', function (req, res){
-    
-    var id = req.params.id;
-    
-    if (!id){
-        Helper.errorResponse(res, 'Incomplete data');
-        return;
-    }
-    
-    checkUser(id, req, res, function(){
-        TraceLine.find({userId: id}, function(err, traces) {
-            if (err) {
-                Helper.errorResponse(res, err);
-                return; 
-            }
-            if(traces.length == 0) { 
-                Helper.errorResponse(res, 'There are no logs for this user.');
-                return;
-            }
-            
-            var body = traces.map(function(trace) {
-                return trace.serverDateTime
-                + ' | ' + trace.traceLevel
-                + ' | ' + trace.message; 
-            }).join('\n');
-            
-            res.end(body);        
-        }); 
-    });                               	
-});
+//app.get('/logs/:id', function (req, res){
+//    
+//    var id = req.params.id;
+//    
+//    if (!id){
+//        Helper.errorResponse(res, 'Incomplete data');
+//        return;
+//    }
+//    
+//    checkUser(id, req, res, function(){
+//        TraceLine.find({userId: id}, function(err, traces) {
+//            if (err) {
+//                Helper.errorResponse(res, err);
+//                return; 
+//            }
+//            if(traces.length == 0) { 
+//                Helper.errorResponse(res, 'There are no logs for this user.');
+//                return;
+//            }
+//            
+//            var body = traces.map(function(trace) {
+//                return trace.serverDateTime
+//                + ' | ' + trace.traceLevel
+//                + ' | ' + trace.message; 
+//            }).join('\n');
+//            
+//            res.end(body);        
+//        }); 
+//    });                               	
+//});
 
 app.post('/logs/:id', function (req, res){       
     
-    var id = req.params.id;
+    var id = req.params.id;        
     
-    checkUser(id, req, res, function(){    
+    req.setEncoding('utf8');
+       
+    var message = req.body.message;   
+    var traceLevel = req.body.traceLevel;
     
-        req.setEncoding('utf8');
-           
-        var message = req.body.message;   
-        var traceLevel = req.body.traceLevel;
+    if (!message || !traceLevel){
+        Helper.errorResponse(res, 'Incomplete data');
+        return;    
+    }                 
+
+    // Create the Object (mongoDB related)
+    var myTrace = new TraceLine({ 
+        userId: id, 
+        message: message, 
+        traceLevel: traceLevel, 
+        serverDateTime: Helper.getDateTime() 
+    });       
+                         
+    // Emit the object using socket.io                         
+    io.to(id).emit('traceLine', myTrace);
         
-        if (!message || !traceLevel){
-            Helper.errorResponse(res, 'Incomplete data');
-            return;    
-        }                 
+    // Save the object
+    myTrace.save(function(err){       
+       if (err){
+          Helper.errorResponse(res, err);
+          return; 
+       }               
+    });    
     
-        // Create the Object (mongoDB related)
-        var myTrace = new TraceLine({ 
-            userId: id, 
-            message: message, 
-            traceLevel: traceLevel, 
-            serverDateTime: Helper.getDateTime() 
-        });       
-                             
-        // Emit the object using socket.io                         
-        io.to(id).emit('traceLine', myTrace);
-            
-        // Save the object
-        myTrace.save(function(err){       
-           if (err){
-              Helper.errorResponse(res, err);
-              return; 
-           }               
-        });    
-        
-        // Return the response		
-        res.json({success: true});
-    
-    });
+    // Return the response		
+    res.json({success: true});    
     	           
 });
 
@@ -198,7 +202,7 @@ function checkUser(id, req, res, callback){
             return; 
         }                        
         if (!userId || !userId.userId) {
-            Helper.errorResponse(res, 'Invalid User ID. Please use a valid one. You can request it to \\logs\\start.');
+            Helper.errorResponse(res, 'Invalid User ID. Please use a valid one. You can request it to \logs\start.');
             return;            
         }
         else {
