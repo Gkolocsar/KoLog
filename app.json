@@ -1,0 +1,7 @@
+{
+  "name": "KoLog",
+  "description": "Trace log monitoring server",
+  "repository": "https://github.com/makingsensetraining/KoLog",
+  "logo": "http://www.mapsofworld.com/images/world-countries-flags/romania-flag.gif",
+  "keywords": ["node", "mongo", "express"]
+}
