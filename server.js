@@ -67,11 +67,12 @@ app.use(bodyParser.json());
 
 app.get('/', function (req, res) {
       
-  res.end('-=KoLog is running=- '
-  + '\n [[The future belongs to the MAD]]  '
-  + '\n* Use \\logs\\start to get an ID and start using KoLog.'
-  + '\n* Send the trace logs to  the server using a POST request to //logs//:id.'
-  + '\n* Monitor the trace logs from the web: //logs/automatic//:id');
+  res.end('--------------------------------=KoLog=----------------------------------'
+  + '\n[[====================The future belongs to the MAD====================]]'
+  + '\n\n* Use \\start to get an ID and start using KoLog.'
+  + '\n* Send the trace logs to  the server using a POST request to \\logs\\:id.'
+  + '\n* Monitor the trace logs from the web using a GET request to \\logs\\:id.'
+  + '\n* Adding ?h=1 to the GET request will request the history for that ID.');
     
 });
 
@@ -89,14 +90,14 @@ app.use(function(req, res, next) {
 // Middleware to check if the user has a UID
 app.get('/logs/:id', function(req, res, next) {
     
-    var id = req.params.id;
+    var id = req.params.id;       
     
     checkUser(id, req, res, function() {
        next(); 
     });    
 });
 
-app.get('/logs/start', function(req, res) {    
+app.get('/start', function(req, res) {    
     // Create the Object (mongoDB related)
     var userId = new UserId({ 
         userId: Helper.randomUID(),          
@@ -202,7 +203,7 @@ function checkUser(id, req, res, callback){
             return; 
         }                        
         if (!userId || !userId.userId) {
-            Helper.errorResponse(res, 'Invalid User ID. Please use a valid one. You can request it to \logs\start.');
+            Helper.errorResponse(res, 'Invalid User ID. Please use a valid one. You can request it to \\logs\\start.');
             return;            
         }
         else {

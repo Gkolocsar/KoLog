@@ -1,7 +1,7 @@
 function getUriData(url){
 	var result = parseUri(url);
 	var id = result.path.split("/")[2];
-	var requiresHistory = result.queryKey.history;
+	var requiresHistory = result.queryKey.h;
 	
 	return {id: id, requiresHistory: requiresHistory};
 }
