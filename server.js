@@ -15,6 +15,7 @@ var mongoose   = require('mongoose');
 mongoose.connect('mongodb://localhost:27017/traces'); // connect to our database
 
 var TraceLine  = require('./app/models/traceLine.js');
+var UserId     = require('./app/models/userId.js');
 var Helper     = require('./app/helper.js');
 
 // START THE SERVER
@@ -72,87 +73,136 @@ app.use(function(req, res, next) {
 
 app.get('/', function (req, res) {
       
-  res.end('KoLog is running. The future belongs to the MAD.');
+  res.end('-=KoLog is running=- '
+  + '\n [[The future belongs to the MAD]]  '
+  + '\n* Use \\logs\\start to get an ID and start using KoLog.'
+  + '\n* Send the trace logs to  the server using a POST request to //logs//:id.'
+  + '\n* Monitor the trace logs from the web: //logs/automatic//:id');
     
 });
 
 app.use(express.static(__dirname + "/public"));  
 
+// VERBS
+// ============================================================================
+
+app.get('/logs/start', function(req, res){    
+    // Create the Object (mongoDB related)
+    var userId = new UserId({ 
+        userId: Helper.randomUID(),          
+        serverDateTime: Helper.getDateTime() 
+    });                                    
+        
+    // Save the object
+    userId.save(function(err){       
+       if (err){
+          Helper.errorResponse(res, err);
+          return; 
+       }               
+    });
+     
+    res.json(userId); 
+});
+
 app.get('/logs/automatic/:id', function (req, res){
     
     var id = req.params.id;                 
     
-    if(!id){
+    if (!id) {
         Helper.errorResponse(res, 'Incomplete data');
         return;
     }
     
-    res.sendFile(__dirname + "/public/index.html");   
+    checkUser(id, req, res, function(){
+        res.sendFile(__dirname + "/public/index.html");
+    });              
 });
 
 app.get('/logs/:id', function (req, res){
     
     var id = req.params.id;
     
-    if(!id){
+    if (!id){
         Helper.errorResponse(res, 'Incomplete data');
         return;
-    }                           
-
-    TraceLine.find({userId: id}, function(err, traces) {
-        if(err){
-            Helper.errorResponse(res, err);
-            return; 
-        }
-        if(traces.length == 0){
-        	res.end("There are no logs for this user."); 
-        }
-        
-        var body = traces.map(function(trace){
-            return trace.serverDateTime
-            + ' | ' + trace.traceLevel
-            + ' | ' + trace.message; 
-        }).join('\n');
-        
-        res.end(body);
-        //res.json(traces);    
-    });	
+    }
+    
+    checkUser(id, req, res, function(){
+        TraceLine.find({userId: id}, function(err, traces) {
+            if (err) {
+                Helper.errorResponse(res, err);
+                return; 
+            }
+            if(traces.length == 0) { 
+                Helper.errorResponse(res, 'There are no logs for this user.');
+                return;
+            }
+            
+            var body = traces.map(function(trace) {
+                return trace.serverDateTime
+                + ' | ' + trace.traceLevel
+                + ' | ' + trace.message; 
+            }).join('\n');
+            
+            res.end(body);        
+        }); 
+    });                               	
 });
 
 app.post('/logs/:id', function (req, res){       
     
-    var id = req.params.id;    
+    var id = req.params.id;
     
-    req.setEncoding('utf8');
-       
-    var message = req.body.message;   
-    var traceLevel = req.body.traceLevel;
+    checkUser(id, req, res, function(){    
     
-    if (!message || !traceLevel){
-        Helper.errorResponse(res, 'Incomplete data');
-        return;    
-    }                 
-
-    // Create the Object (mongoDB related)
-    var myTrace = new TraceLine({ 
-        userId: id, 
-        message: message, 
-        traceLevel: traceLevel, 
-        serverDateTime: Helper.getDateTime() 
-    });       
-                         
-    // Emit the object using socket.io                         
-    io.to(id).emit('traceLine', myTrace);
+        req.setEncoding('utf8');
+           
+        var message = req.body.message;   
+        var traceLevel = req.body.traceLevel;
         
-    // Save the object
-    myTrace.save(function(err){       
-       if (err){
-          Helper.errorResponse(res, err);
-          return; 
-       }               
-    });    
+        if (!message || !traceLevel){
+            Helper.errorResponse(res, 'Incomplete data');
+            return;    
+        }                 
     
-    // Return the response		
-    res.json({success: true});
+        // Create the Object (mongoDB related)
+        var myTrace = new TraceLine({ 
+            userId: id, 
+            message: message, 
+            traceLevel: traceLevel, 
+            serverDateTime: Helper.getDateTime() 
+        });       
+                             
+        // Emit the object using socket.io                         
+        io.to(id).emit('traceLine', myTrace);
+            
+        // Save the object
+        myTrace.save(function(err){       
+           if (err){
+              Helper.errorResponse(res, err);
+              return; 
+           }               
+        });    
+        
+        // Return the response		
+        res.json({success: true});
+    
+    });
     	           
 });
+
+function checkUser(id, req, res, callback){
+    UserId.findOne({userId: id}, function(err, userId) {
+        if (err) {
+            Helper.errorResponse(res, err);
+            return; 
+        }                        
+        if (!userId || !userId.userId) {
+            Helper.errorResponse(res, 'Invalid User ID. Please use a valid one. You can request it to \\logs\\start.');
+            return;            
+        }
+        else {
+            callback();
+        }
+    });
+}
