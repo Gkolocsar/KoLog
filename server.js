@@ -12,7 +12,8 @@ var io         = require('socket.io')(http);
 var bodyParser = require('body-parser');
 
 var mongoose   = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/traces'); // connect to our database
+//mongoose.connect('mongodb://localhost:27017/traces'); // connect to our database
+mongoose.connect('mongodb://kolog:kolog123@ds037262.mongolab.com:37262/traces');
 
 var TraceLine  = require('./app/models/traceLine.js');
 var UserId     = require('./app/models/userId.js');
@@ -203,7 +204,7 @@ function checkUser(id, req, res, callback){
             return; 
         }                        
         if (!userId || !userId.userId) {
-            Helper.errorResponse(res, 'Invalid User ID. Please use a valid one. You can request it to \\logs\\start.');
+            Helper.errorResponse(res, 'Invalid User ID. Please use a valid one. You can request it to \\start.');
             return;            
         }
         else {
