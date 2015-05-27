@@ -9,7 +9,8 @@ var SocketManager = (function(){
     }
   
     socket.on('traceLine', function(log){
-      $("#logTemplate").tmpl(log).appendTo("#logs");            
+      $("#logTemplate").tmpl(log).appendTo("#logs");			
+			$(document).scrollTop($(document).height());            
     });
   };    
   
