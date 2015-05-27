@@ -70,10 +70,10 @@ app.get('/', function (req, res) {
       
   res.end('--------------------------------=KoLog=----------------------------------'
   + '\n[[====================The future belongs to the MAD====================]]'
-  + '\n\n* Use \\start to get an ID and start using KoLog'
-  + '\n* Send the trace logs to  the server using a POST request to \\logs\\:id'
+  + '\n\n* Use /start to get an ID and start using KoLog'
+  + '\n* Send the trace logs to  the server using a POST request to /logs/:id'
 	+ '\n* The POST body should be {message: STRING, traceLevel: STRING}'
-  + '\n* Monitor the trace logs from the web using a GET request to \\logs\\:id'
+  + '\n* Monitor the trace logs from the web using a GET request to /logs/:id'
   + '\n* Adding ?h=1 to the GET request will request the history for that ID');
     
 });
@@ -205,7 +205,7 @@ function checkUser(id, req, res, callback){
             return; 
         }                        
         if (!userId || !userId.userId) {
-            Helper.errorResponse(res, 'Invalid User ID. Please use a valid one. You can request it to \\start.');
+            Helper.errorResponse(res, 'Invalid User ID. Please use a valid one. You can request it to /start.');
             return;            
         }
         else {
