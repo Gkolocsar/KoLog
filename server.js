@@ -90,7 +90,7 @@ app.use(function(req, res, next) {
 });
 
 // Middleware to check if the user has a UID
-app.get('/logs/:id', function(req, res, next) {
+app.use('/logs/:id', function(req, res, next) {
     
     var id = req.params.id;       
     

@@ -9,6 +9,7 @@ function getDateTime(){
     + "." + completeWithZeroes(3, date.getMilliseconds());
 }
 
+// Over complicating things... ;)
 function completeWithZeroes(digits, n){	
   if (digits <= 1) return n;    
 	
