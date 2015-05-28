@@ -2,7 +2,7 @@ function getDateTime(){
     var date = new Date();
     return date.getFullYear() 
     + "/" + addZ(date.getMonth() + 1)  
-    + "/" + addZ(date.getDay())
+    + "/" + addZ(date.getDate())
     + " " + addZ(date.getHours())
     + ":" + addZ(date.getMinutes())
     + ":" + addZ(date.getSeconds())
