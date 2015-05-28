@@ -1,26 +1,27 @@
 function getDateTime(){
     var date = new Date();
     return date.getFullYear() 
-    + "/" + addZ(date.getMonth() + 1)  
-    + "/" + addZ(date.getDate())
-    + " " + addZ(date.getHours())
-    + ":" + addZ(date.getMinutes())
-    + ":" + addZ(date.getSeconds())
-    + "." + addZ2(date.getMilliseconds());
+    + "/" + completeWithZeroes(2, date.getMonth() + 1)  
+    + "/" + completeWithZeroes(2, date.getDate())
+    + " " + completeWithZeroes(2, date.getHours())
+    + ":" + completeWithZeroes(2, date.getMinutes())
+    + ":" + completeWithZeroes(2, date.getSeconds())
+    + "." + completeWithZeroes(3, date.getMilliseconds());
 }
 
-function addZ(n) {
-	return n < 10 ? '0'+n : ''+n;
-}
-
-function addZ2(n){
-	if (n < 10) {
-		return '00'+n;
-	} else if (n < 100) {
-		return '0'+n;
-	} else {
-		return ''+n;
-	}	
+function completeWithZeroes(digits, n){	
+  if (digits <= 1) return n;    
+	
+	var _pow = Math.pow(10, digits - 1);
+    
+  if (n > _pow) return n;
+	
+	while(_pow > 1){		        
+        var remainder = n/_pow;        
+        if(remainder < 1) n = '0' + n;
+		_pow /= 10;
+	}
+	return n;
 }
 
 function errorResponse(res, error){
