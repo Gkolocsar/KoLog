@@ -129,37 +129,6 @@ app.get('/logs/:id', function (req, res) {
     res.sendFile(__dirname + "/public/index.html");                  
 });
 
-//app.get('/logs/:id', function (req, res){
-//    
-//    var id = req.params.id;
-//    
-//    if (!id){
-//        Helper.errorResponse(res, 'Incomplete data');
-//        return;
-//    }
-//    
-//    checkUser(id, req, res, function(){
-//        TraceLine.find({userId: id}, function(err, traces) {
-//            if (err) {
-//                Helper.errorResponse(res, err);
-//                return; 
-//            }
-//            if(traces.length == 0) { 
-//                Helper.errorResponse(res, 'There are no logs for this user.');
-//                return;
-//            }
-//            
-//            var body = traces.map(function(trace) {
-//                return trace.serverDateTime
-//                + ' | ' + trace.traceLevel
-//                + ' | ' + trace.message; 
-//            }).join('\n');
-//            
-//            res.end(body);        
-//        }); 
-//    });                               	
-//});
-
 app.post('/logs/:id', function (req, res){       
     
     var id = req.params.id;        
@@ -198,18 +167,24 @@ app.post('/logs/:id', function (req, res){
     	           
 });
 
-function checkUser(id, req, res, callback){
-    UserId.findOne({userId: id}, function(err, userId) {
-        if (err) {
+function checkUser(id, req, res, callback){		
+    UserId.findOne({userId: id}, function(err, userId) {				
+        if (err) {										
             Helper.errorResponse(res, err);
             return; 
         }                        
-        if (!userId || !userId.userId) {
+        if (!userId || !userId.userId) {											
             Helper.errorResponse(res, 'Invalid User ID. Please use a valid one. You can request it to /start.');
             return;            
         }
-        else {
+        else {											
             callback();
         }
     });
 }
+
+module.exports = {
+	Helper: Helper,
+	UserDBAccess: UserId,
+	checkUser: checkUser
+};
